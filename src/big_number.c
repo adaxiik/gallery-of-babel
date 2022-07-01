@@ -56,13 +56,14 @@ BigNumber* BigNumber_add(BigNumber *self, BigNumber *other, Base base)
     BigNumber *result = BigNumber_new(0, base);
     uint32_t carry = 0;
     uint32_t i = 0;
+    size_t base_length = strlen(base);
     while (i < self->length || i < other->length)
     {
         uint32_t self_value = i < self->length ? BigNumber_BaseToDecimal(self->value[i], base) : 0;
         uint32_t other_value = i < other->length ? BigNumber_BaseToDecimal(other->value[i], base) : 0;
         uint32_t sum = self_value + other_value + carry;
-        carry = sum / strlen(base);
-        sum %= strlen(base);
+        carry = sum / base_length;
+        sum %= base_length;
         BigNumber_extendLength(result, i + 1, base);
         result->value[i] = base[sum];
         i++;
@@ -71,6 +72,70 @@ BigNumber* BigNumber_add(BigNumber *self, BigNumber *other, Base base)
     {
         BigNumber_extendLength(result, i + 1, base);
         result->value[i] = base[carry];
+    }
+    return result;
+}
+
+BigNumber* BigNumber_sub(BigNumber *self, BigNumber *other, Base base)
+{
+    BigNumber *result = BigNumber_new(0, base);
+    uint32_t carry = 0;
+    uint32_t i = 0;
+    size_t base_length = strlen(base);
+    while (i < self->length || i < other->length)
+    {
+        int64_t self_value = i < self->length ? BigNumber_BaseToDecimal(self->value[i], base) : 0;
+        int64_t other_value = i < other->length ? BigNumber_BaseToDecimal(other->value[i], base) : 0;
+        int64_t difference = self_value - other_value - carry;
+        carry = difference < 0 ? 1 : 0;
+        difference = difference < 0 ? difference + (int64_t)base_length : difference;
+        BigNumber_extendLength(result, i + 1, base);
+        result->value[i] = base[difference];
+        i++;
+    }
+    return result;
+}
+
+BigNumber* BigNumber_mul(BigNumber *self, BigNumber *other, Base base)
+{
+    BigNumber *result = BigNumber_new(0, base);
+    uint32_t i = 0;
+    size_t base_length = strlen(base);
+    while (i < self->length)
+    {
+        uint32_t self_value = BigNumber_BaseToDecimal(self->value[i], base);
+        uint32_t carry = 0;
+        uint32_t j = 0;
+        while (j < other->length)
+        {
+            BigNumber_extendLength(result, i + j + 1, base);
+            uint32_t result_value = BigNumber_BaseToDecimal(result->value[i + j], base);
+            uint32_t other_value = BigNumber_BaseToDecimal(other->value[j], base);
+            uint32_t product = self_value * other_value + carry+result_value;
+            carry = product / base_length;
+            product %= base_length;
+            result->value[i + j] = base[product];
+            j++;
+        }
+        if (carry > 0)
+        {
+            BigNumber_extendLength(result, i + j + 1, base);
+            result->value[i + j] = base[carry];
+        }
+        i++;
+    }
+    return result;
+}
+
+BigNumber* BigNumber_pow(BigNumber *self, uint32_t power, Base base)
+{
+    BigNumber *result = BigNumber_new(1, base);
+    while (power > 0)
+    {
+        BigNumber* temp = result;
+        result = BigNumber_mul(result, self, base);
+        BigNumber_free(&temp);
+        power--;
     }
     return result;
 }
