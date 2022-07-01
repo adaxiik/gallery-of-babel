@@ -6,6 +6,6 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O2 -march=native -mtune=generic -fl
 
 file(GLOB SOURCES "src/*.c")
 add_executable(gallery ${SOURCES})
-target_link_libraries(gallery m png)
+target_link_libraries(gallery m png gmp)
 
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_+={}[]|:;\"'<>,.?~`"
+#base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
 def convert(inp, target):
     print("Converting to base %d" % len(target))
@@ -11,10 +12,10 @@ def convert(inp, target):
         out.append(target[inp % len(target)])
         inp //= len(target)
     # reverse the list
-    # out.reverse()
+    out.reverse()
     print("Output length: %d" % len(out))
     return ''.join(out)
 
 
 #convert(8**(256*256), base)
-print(convert(8**(65*65), base))
+print(convert(2**(65536), base))
