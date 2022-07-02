@@ -164,7 +164,7 @@ Image *Scale(Image *image, float scale)
     Image *scaled = (Image *)malloc(sizeof(Image));
     scaled->width = (int)(image->width * scale);
     scaled->height = (int)(image->height * scale);
-    scaled->pixels = malloc(scaled->width * scaled->height * sizeof(Pixel));
+    scaled->pixels = (Pixel*)malloc(scaled->width * scaled->height * sizeof(Pixel));
     Pixel *pixels = scaled->pixels;
     for (uint32_t y = 0; y < scaled->height; y++)
     {
@@ -179,12 +179,32 @@ Image *Scale(Image *image, float scale)
     return scaled;
 }
 
+Image* ScaleXY(Image *image, float scale_x, float scale_y)
+{
+    Image *scaled = (Image *)malloc(sizeof(Image));
+    scaled->width = (int)(image->width * scale_x);
+    scaled->height = (int)(image->height * scale_y);
+    scaled->pixels = (Pixel*)malloc(scaled->width * scaled->height * sizeof(Pixel));
+    Pixel *pixels = scaled->pixels;
+    for (uint32_t y = 0; y < scaled->height; y++)
+    {
+        for (uint32_t x = 0; x < scaled->width; x++)
+        {
+            int x_src = (int)(x / scale_x);
+            int y_src = (int)(y / scale_y);
+            pixels[y * scaled->width + x] = image->pixels[y_src * image->width + x_src];
+        }
+    }
+    DestroyImage(&image);
+    return scaled;
+}
+
 Image *DownScaleSoft(Image *image)
 {
     Image *scaled = (Image *)malloc(sizeof(Image));
     scaled->width = (int)(image->width / 2);
     scaled->height = (int)(image->height / 2);
-    scaled->pixels = malloc(scaled->width * scaled->height * sizeof(Pixel));
+    scaled->pixels = (Pixel*)malloc(scaled->width * scaled->height * sizeof(Pixel));
     Pixel *pixels = scaled->pixels;
     for (uint32_t y = 0; y < scaled->height; y++)
     {

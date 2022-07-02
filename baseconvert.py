@@ -3,19 +3,19 @@
 base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_+={}[]|:;\"'<>,.?~`"
 #base = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 
-def convert(inp, target):
-    print("Converting to base %d" % len(target))
-    print("Input length: %d" % len(str(inp)))
+class BaseConverter:
+    def __init__(self, base):
+        self.base = base
 
-    out = []
-    while inp > 0:
-        out.append(target[inp % len(target)])
-        inp //= len(target)
-    # reverse the list
-    out.reverse()
-    print("Output length: %d" % len(out))
-    return ''.join(out)
+    def convert(self, inp):
 
+        out = []
+        while inp > 0:
+            out.append(self.base[inp % len(self.base)])
+            inp //= len(self.base)
+        # reverse the list
+        out.reverse()
+        return ''.join(out)
 
-#convert(8**(256*256), base)
-print(convert(2**(65536), base))
+b = BaseConverter("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+print(b.convert(1000))

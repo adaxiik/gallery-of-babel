@@ -22,6 +22,7 @@ void WritePNG(const char *filename, Image *image);
 Image *ReadPNG(const char *filename);
 
 Image* Scale(Image* image, float scale);
+Image* ScaleXY(Image* image, float x, float y);
 
 Image* DownScaleSoft(Image* image);
 
