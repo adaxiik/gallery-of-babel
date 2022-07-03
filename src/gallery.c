@@ -45,7 +45,7 @@ void ImageToPosition(mpz_t *result, Image *image, bool verbose)
 
     for(uint32_t i = 0; i < image->width * image->height; i++)
     {
-        if(verbose && i%(image->width * image->height / 100) == 0)
+        if(verbose && i%((image->width * image->height / 100)+1) == 0) // +1 to avoid division by zero
             printf("%d%%\n",(int)(100 * i / (image->width * image->height)));
 
         mpz_mul_ui(temp, temp, 4096);
@@ -65,7 +65,7 @@ Image* ImageFromPosition(mpz_t number, bool verbose , int image_size)
 
     for(uint32_t i = 0; i < image_size* image_size; i++)
     {
-        if(verbose && i % (image_size * image_size / 100) == 0)
+        if(verbose && i % ((image_size * image_size / 100)+1) == 0) // +1 to avoid division by zero
             printf("%d%%\n", (int)(100 * i / image_size / image_size));
 
         image->pixels[(image_size - i / image_size - 1) * image_size + (image_size - i % image_size - 1)] = PixelFromPosition(mpz_get_ui(number));

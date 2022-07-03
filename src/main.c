@@ -3,9 +3,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <gmp.h>
 #include "png_wrapper.h"
 #include "gallery.h"
-#include <gmp.h>
 
 const char base_92[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_+={}[]|:;\"'<>,.?~`";
 const char base_10[] = "0123456789";
@@ -36,7 +36,7 @@ void ToNumber(Arguments *args)
 
     mpz_t number;
     mpz_init(number);
-    
+
     image = ScaleXY(image, (float)args->size / image->width, (float)args->size / image->height);
     ImageToPosition(&number, image, args->verbose);
     char *str = toBase(number, args->base);

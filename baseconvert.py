@@ -17,5 +17,5 @@ class BaseConverter:
         out.reverse()
         return ''.join(out)
 
-b = BaseConverter("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-print(b.convert(1000))
+b = BaseConverter(base)
+print(b.convert(4096**64))
