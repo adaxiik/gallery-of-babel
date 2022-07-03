@@ -64,7 +64,7 @@ $ cd build
 $ cmake ..
 $ make
 ```
-(or just `make` in root directory)
+(or just `make release` in root directory)
 
 ## Dependencies
 - [libpng](http://www.libpng.org/pub/png/libpng.html)
