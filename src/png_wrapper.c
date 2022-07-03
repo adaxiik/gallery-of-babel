@@ -64,7 +64,6 @@ void WritePNG(const char *filename, Image *image)
     png_write_end(png, NULL);
     png_destroy_write_struct(&png, &info);
     fclose(fp);
-    printf("Image %s successfully created\n", filename);
 }
 
 Image *ReadPNG(const char *filename)

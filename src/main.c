@@ -1,193 +1,134 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 #include "png_wrapper.h"
-// #include "big_number.h"
+#include "gallery.h"
 #include <gmp.h>
 
 const char base_92[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_+={}[]|:;\"'<>,.?~`";
 const char base_10[] = "0123456789";
 const char base_2[] = "01";
 
-#define IMAGE_SIZE 256.0
-//#define PRINT_PROGRESS
-
-char *toBase(mpz_t number, const char *base)
+typedef struct
 {
-    size_t size = mpz_sizeinbase(number, strlen(base));
-    char *result = malloc(sizeof(char) * (size + 1));
+    char *input_file;
+    char *output_file;
+    const char *base;
+    int size;
+    bool verbose;
+} Arguments;
 
-    // https://github.com/pierremolinaro/omnibus-dev/blob/master/build/libpm/gmp/mpn-get_str.c
-    // size_t mpn_get_str (unsigned char *str, int base, mp_ptr up, mp_size_t un)
-    mpn_get_str((unsigned char *)result, strlen(base), number->_mp_d, number->_mp_size);
-
-    // https://github.com/alisw/GMP/blob/master/mpz/get_str.c
-    for (size_t i = 0; i < size; i++)
-        result[i] = base[(int)result[i]];
-    result[size] = '\0';
-    return result;
+const char *GetExt(const char *filename)
+{
+    const char *dot = strrchr(filename, '.');
+    if (!dot || dot == filename)
+        return "";
+    return dot + 1;
 }
 
-void fromBase(mpz_t *result, char *number, const char *base)
+void ToNumber(Arguments *args)
 {
-    size_t size = strlen(number);
-    mpz_t temp;
-    mpz_init(temp);
-    mpz_set_ui(temp, 0);
-    for (size_t i = 0; i < size; i++)
-    {
-        int index = strchr(base, number[i]) - base;
-        mpz_mul_ui(temp, temp, strlen(base));
-        mpz_add_ui(temp, temp, index);
-    }
-    mpz_set(*result, temp);
-    mpz_clear(temp);
+    Image *image = ReadPNG(args->input_file);
+    if (args->verbose)
+        printf("%s: %d x %d\n", args->input_file, image->width, image->height);
+
+    mpz_t number;
+    mpz_init(number);
+    
+    image = ScaleXY(image, (float)args->size / image->width, (float)args->size / image->height);
+    ImageToPosition(&number, image, args->verbose);
+    char *str = toBase(number, args->base);
+
+    if (args->verbose)
+        printf("Number length: %ld\n", strlen(str));
+
+    SaveToTXT(args->output_file, str);
+
+    free(str);
+    mpz_clear(number);
+    DestroyImage(&image);
 }
 
-inline static uint32_t PixelPosition(Pixel p)
+void FromNumber(Arguments *args)
 {
-    //return p.red * 256 * 256 + p.green * 256 + p.blue;
-    return (p.red/16) *16*16 + (p.green/16) *16 + (p.blue/16);
-}
+    if (args->verbose)
+        printf("Reading number from file...\n");
+    char *str = LoadFromTXT(args->input_file);
+    mpz_t number;
+    mpz_init(number);
 
-inline static Pixel PixelFromPosition(uint32_t position)
-{
-    // Pixel p;
-    // p.red = position / (256 * 256);
-    // p.green = (position - p.red * 256 * 256) / 256;
-    // p.blue = position - p.red * 256 * 256 - p.green * 256;
-    // return p;
-    Pixel p;
-    p.red = (position / 16) ;
-    p.green = (position - p.red * 16 * 16) ;
-    p.blue = (position - p.red * 16 * 16 - p.green * 16)*16;
-    return p;
-}
+    fromBase(&number, str, args->base);
+    Image *image = ImageFromPosition(number, args->verbose, args->size);
+    WritePNG(args->output_file, image);
 
-void ImageToPosition(mpz_t *result, Image *image)
-{
-    mpz_t temp;
-    mpz_init(temp);
-    mpz_set_ui(temp, 0);
-
-    // for (uint32_t y = 0; y < image->height; y++)
-    // {
-    //     printf("%d/%d => %d%%\n", y, image->height, (int)(100 * y / image->height));
-    //     for (uint32_t x = 0; x < image->width; x++)
-    //     {
-    //         mpz_mul_ui(temp, temp, 4096);
-    //         mpz_add_ui(temp, temp, PixelPosition(image->pixels[y * image->width + x]));
-    //     }
-    // }
-
-    for(uint32_t i = 0; i < image->width * image->height; i++)
-    {
-        #ifdef PRINT_PROGRESS
-        if(i%(image->width * image->height / 100) == 0)
-            printf("%d%%\n",(int)(100 * i / (image->width * image->height)));
-        #endif
-        mpz_mul_ui(temp, temp, 4096);
-        mpz_add_ui(temp, temp, PixelPosition(image->pixels[i]));
-    }
-
-
-    mpz_set(*result, temp);
-    mpz_clear(temp);
-}
-
-Image* ImageFromPosition(mpz_t number)
-{
-    Image *image = malloc(sizeof(Image));
-    image->pixels = malloc(sizeof(Pixel) * IMAGE_SIZE * IMAGE_SIZE);
-    image->width = IMAGE_SIZE;
-    image->height = IMAGE_SIZE;
-   
-    // for (uint32_t y = 0; y < image->height; y++)
-    // {
-    //     printf("%d/%d => %d%%\n", y, image->height, (int)(100 * y / image->height));
-    //     for (uint32_t x = 0; x < image->width; x++)
-    //     {
-    //         image->pixels[(image->height - y - 1) * image->width + (image->width - x - 1)] = PixelFromPosition(mpz_get_ui(number));
-    //         mpz_div_ui(number, number, 4096);
-    //     }
-    // }
-    for(uint32_t i = 0; i < image->width * image->height; i++)
-    {
-        #ifdef PRINT_PROGRESS
-        if(i % (image->width * image->height / 100) == 0)
-            printf("%d%%\n", (int)(100 * i / image->width / image->height));
-        #endif
-        
-        image->pixels[(image->height - i / image->width - 1) * image->width + (image->width - i % image->width - 1)] = PixelFromPosition(mpz_get_ui(number));
-        mpz_div_ui(number, number, 4096);   
-    }
-    return image;
-}
-
-void SaveToTXT(const char* filename, char* str)
-{
-    FILE *file = fopen(filename, "w");
-    fprintf(file, "%s", str);
-    fclose(file);
-}
-
-char* LoadFromTXT(const char* filename)
-{
-    FILE *file = fopen(filename, "r");
-    fseek(file, 0, SEEK_END);
-    long size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    char *content = malloc(sizeof(char) * (size + 1));
-
-    fread(content, 1, size, file);
-    fclose(file);
-
-    content[size] = '\0';
-    return content;
-}
-
-int main(void)
-{
-    // printf("Base %ld\n", strlen(base));
-
-    // mpz_t a, b;
-    // mpz_init(a);
-    // mpz_init(b);
-    // mpz_set_str(a, "16777216", 10);
-    // mpz_pow_ui(b, a, 512*512);
-
-    // mpz_out_str(stdout, 10, b);
-
-    // printf("\n===\n");
-    // char *result = toBase(b, base_92);
-    // printf("%ld\n", strlen(result));
-    // mpz_t c;
-    // mpz_init(c);
-    // fromBase(&c, result, base_92);
-    // mpz_out_str(stdout, 10, c);
-    // printf("\n");
-
-    // printf("%s\n", result);
-    //  free(result);
-
-    // mpz_clear(a);
-    // mpz_clear(b);
-    Image *image = ReadPNG("brm.png");
-
-    printf("%dx%d\n", image->width, image->height);
-    image = ScaleXY(image, IMAGE_SIZE / image->width, IMAGE_SIZE / image->height);
-    printf("%dx%d\n", image->width, image->height);
-
-    mpz_t position;
-    mpz_init(position);
-    ImageToPosition(&position, image);
-
-    Image *image2 = ImageFromPosition(position);
-    WritePNG("brm2.png", image2);
+    if (args->verbose)
+        printf("File saved to %s\n", args->output_file);
 
     DestroyImage(&image);
-    DestroyImage(&image2);
+    mpz_clear(number);
+    free(str);
+}
 
+// ./galleryofbabel -i <file> -o <file> [-v (verbose, default: 0, {0,1})] [-s (size, default: 256)] [-b (base, default: 92, {2, 10, 92})]
+void ParseArgs(int argc, char **argv)
+{
+    if (argc < 5)
+        goto error;
+
+    Arguments args = {.input_file = NULL, .output_file = NULL, .base = base_92, .size = 256, .verbose = false};
+
+    for (int i = 1; i < argc - 1; i++)
+    {
+        for (size_t j = 0; j < strlen(argv[i]); j++)
+            argv[i][j] = tolower(argv[i][j]);
+
+        if (!strcmp(argv[i], "-i"))
+            args.input_file = argv[i + 1];
+        else if (!strcmp(argv[i], "-o"))
+            args.output_file = argv[i + 1];
+        else if (!strcmp(argv[i], "-v"))
+        {
+            args.verbose = atoi(argv[i + 1]);
+        }
+        else if (!strcmp(argv[i], "-s"))
+        {
+            args.size = atoi(argv[i + 1]);
+            if (args.size < 2 || args.size > 8192)
+                args.size = 256;
+        }
+        else if (!strcmp(argv[i], "-b"))
+        {
+            if (!strcmp(argv[i + 1], "2"))
+                args.base = base_2;
+            else if (!strcmp(argv[i + 1], "10"))
+                args.base = base_10;
+            else if (!strcmp(argv[i + 1], "92"))
+                args.base = base_92;
+            else
+                goto error;
+        }
+    }
+    if (!args.input_file || !args.output_file)
+        goto error;
+
+    if (args.verbose)
+        printf("Input file: %s\nOutput file: %s\nSize: %d\n", args.input_file, args.output_file, args.size);
+
+    if (!strcmp(GetExt(args.input_file), "png"))
+        ToNumber(&args);
+    else
+        FromNumber(&args);
+
+    return;
+error:
+    printf("Usage: %s -i <file> -o <file> [-v (verbose, default: 0, {0,1})] [-s (size, default: 256)] [-b (base, default: 92, {2, 10, 92})]\n", argv[0]);
+    exit(1);
+}
+
+int main(int argc, char **argv)
+{
+    ParseArgs(argc, argv);
     return 0;
 }
