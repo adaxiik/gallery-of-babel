@@ -38,11 +38,6 @@ or
 
 (way of 'conversion' is determined by input file extension)
 
-# Examples
-try 
-`./galleryofbabel -i examples/example.txt -o output.png -v 1`
-it should output 256x256 picture on that position
-
 
 | flag | description |
 | ---- | ----------- |
@@ -55,6 +50,11 @@ it should output 256x256 picture on that position
 note: to make the position shorter, it is converted to base 92.
 
 ``0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_+={}[]|:;\"'<>,.?~` ``  
+
+# Examples
+try 
+`./galleryofbabel -i examples/example.txt -o output.png -v 1`
+it should output 256x256 picture on that position
 
 ## Build 
 
