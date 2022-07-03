@@ -29,9 +29,13 @@ This means that with the default settings, there are 4096^65536 possible images 
 `./galleryofbabel -i <file> -o <file> [flags]`
 
 for example:
+
 `./galleryofbabel -i input.png -o output.txt`
+
 or 
+
 `./galleryofbabel -i input.txt -o output.png -v 1 -s 512 -b 10`
+
 (way of 'conversion' is determined by input file extension)
 
 # Examples
@@ -49,6 +53,7 @@ it should output 256x256 picture on that position
 | -b | base of i/o number, default: 92, {2, 10, 92} |
 
 note: to make the position shorter, it is converted to base 92.
+
 ``0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_+={}[]|:;\"'<>,.?~` ``  
 
 ## Build 
