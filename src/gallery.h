@@ -19,11 +19,10 @@ inline static const char *GetExt(const char *filename)
     return dot + 1;
 }
 
-
 inline static uint32_t PixelPosition(Pixel p)
 {
-    //return p.red * 256 * 256 + p.green * 256 + p.blue;
-    return (p.red/16) *16*16 + (p.green/16) *16 + (p.blue/16);
+    // return p.red * 256 * 256 + p.green * 256 + p.blue;
+    return (p.red / 16) * 16 * 16 + (p.green / 16) * 16 + (p.blue / 16);
 }
 
 inline static Pixel PixelFromPosition(uint32_t position)
@@ -34,13 +33,11 @@ inline static Pixel PixelFromPosition(uint32_t position)
     // p.blue = position - p.red * 256 * 256 - p.green * 256;
     // return p;
     Pixel p;
-    p.red = (position / 16) ;
-    p.green = (position - p.red * 16 * 16) ;
-    p.blue = (position - p.red * 16 * 16 - p.green * 16)*16;
+    p.red = (position / 16);
+    p.green = (position - p.red * 16 * 16);
+    p.blue = (position - p.red * 16 * 16 - p.green * 16) * 16;
     return p;
 }
-
-
 
 void FromNumber(Arguments *args);
 void ToNumber(Arguments *args);
