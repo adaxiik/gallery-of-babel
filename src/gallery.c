@@ -4,7 +4,7 @@
 
 #include "gallery.h"
 
-char *toBase(mpz_t number, const char *base)
+static char *toBase(mpz_t number, const char *base)
 {
     size_t size = mpz_sizeinbase(number, strlen(base));
     char *result = malloc(sizeof(char) * (size + 1));
@@ -20,7 +20,7 @@ char *toBase(mpz_t number, const char *base)
     return result;
 }
 
-void fromBase(mpz_t *result, char *number, const char *base)
+static void fromBase(mpz_t *result, char *number, const char *base)
 {
     size_t size = strlen(number);
     mpz_t temp;
@@ -37,7 +37,7 @@ void fromBase(mpz_t *result, char *number, const char *base)
 }
 
 
-void ImageToPosition(mpz_t *result, Image *image, bool verbose)
+static void ImageToPosition(mpz_t *result, Image *image, bool verbose)
 {
     mpz_t temp;
     mpz_init(temp);
@@ -57,7 +57,7 @@ void ImageToPosition(mpz_t *result, Image *image, bool verbose)
     mpz_clear(temp);
 }
 
-Image* ImageFromPosition(mpz_t number, bool verbose , int image_size)
+static Image* ImageFromPosition(mpz_t number, bool verbose , int image_size)
 {
     Image *image = malloc(sizeof(Image));
     image->pixels = malloc(sizeof(Pixel) * image_size * image_size);
@@ -74,7 +74,7 @@ Image* ImageFromPosition(mpz_t number, bool verbose , int image_size)
     return image;
 }
 
-void SaveToTXT(const char* filename, char* str)
+static void SaveToTXT(const char* filename, char* str)
 {
     FILE *file = fopen(filename, "w");
     if(file == NULL)
@@ -86,7 +86,7 @@ void SaveToTXT(const char* filename, char* str)
     fclose(file);
 }
 
-char* LoadFromTXT(const char* filename)
+static char* LoadFromTXT(const char* filename)
 {
     FILE *file = fopen(filename, "r");
     if(file == NULL)
@@ -105,4 +105,48 @@ char* LoadFromTXT(const char* filename)
     fclose(file);
     content[size] = '\0';
     return content;
+}
+
+
+void ToNumber(Arguments *args)
+{
+    Image *image = ReadPNG(args->input_file);
+    if (args->verbose)
+        printf("%s: %d x %d\n", args->input_file, image->width, image->height);
+
+    mpz_t number;
+    mpz_init(number);
+
+    image = ScaleXY(image, (float)args->size / image->width, (float)args->size / image->height);
+    ImageToPosition(&number, image, args->verbose);
+    char *str = toBase(number, args->base);
+
+    if (args->verbose)
+        printf("Number length: %ld\n", strlen(str));
+
+    SaveToTXT(args->output_file, str);
+
+    free(str);
+    mpz_clear(number);
+    DestroyImage(&image);
+}
+
+void FromNumber(Arguments *args)
+{
+    if (args->verbose)
+        printf("Reading number from file...\n");
+    char *str = LoadFromTXT(args->input_file);
+    mpz_t number;
+    mpz_init(number);
+
+    fromBase(&number, str, args->base);
+    Image *image = ImageFromPosition(number, args->verbose, args->size);
+    WritePNG(args->output_file, image);
+
+    if (args->verbose)
+        printf("File saved to %s\n", args->output_file);
+
+    DestroyImage(&image);
+    mpz_clear(number);
+    free(str);
 }

@@ -2,6 +2,23 @@
 #include <gmp.h>
 #include "png_wrapper.h"
 
+typedef struct
+{
+    char *input_file;
+    char *output_file;
+    const char *base;
+    int size;
+    bool verbose;
+} Arguments;
+
+inline static const char *GetExt(const char *filename)
+{
+    const char *dot = strrchr(filename, '.');
+    if (!dot || dot == filename)
+        return "";
+    return dot + 1;
+}
+
 
 inline static uint32_t PixelPosition(Pixel p)
 {
@@ -22,14 +39,8 @@ inline static Pixel PixelFromPosition(uint32_t position)
     p.blue = (position - p.red * 16 * 16 - p.green * 16)*16;
     return p;
 }
-char *toBase(mpz_t number, const char *base);
 
-void fromBase(mpz_t *result, char *number, const char *base);
 
-void ImageToPosition(mpz_t *result, Image *image, bool verbose);
 
-Image* ImageFromPosition(mpz_t number, bool verbose , int image_size);
-
-void SaveToTXT(const char* filename, char* str);
-
-char* LoadFromTXT(const char* filename);
+void FromNumber(Arguments *args);
+void ToNumber(Arguments *args);

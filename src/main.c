@@ -11,65 +11,8 @@ const char base_92[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST
 const char base_10[] = "0123456789";
 const char base_2[] = "01";
 
-typedef struct
-{
-    char *input_file;
-    char *output_file;
-    const char *base;
-    int size;
-    bool verbose;
-} Arguments;
 
-const char *GetExt(const char *filename)
-{
-    const char *dot = strrchr(filename, '.');
-    if (!dot || dot == filename)
-        return "";
-    return dot + 1;
-}
 
-void ToNumber(Arguments *args)
-{
-    Image *image = ReadPNG(args->input_file);
-    if (args->verbose)
-        printf("%s: %d x %d\n", args->input_file, image->width, image->height);
-
-    mpz_t number;
-    mpz_init(number);
-
-    image = ScaleXY(image, (float)args->size / image->width, (float)args->size / image->height);
-    ImageToPosition(&number, image, args->verbose);
-    char *str = toBase(number, args->base);
-
-    if (args->verbose)
-        printf("Number length: %ld\n", strlen(str));
-
-    SaveToTXT(args->output_file, str);
-
-    free(str);
-    mpz_clear(number);
-    DestroyImage(&image);
-}
-
-void FromNumber(Arguments *args)
-{
-    if (args->verbose)
-        printf("Reading number from file...\n");
-    char *str = LoadFromTXT(args->input_file);
-    mpz_t number;
-    mpz_init(number);
-
-    fromBase(&number, str, args->base);
-    Image *image = ImageFromPosition(number, args->verbose, args->size);
-    WritePNG(args->output_file, image);
-
-    if (args->verbose)
-        printf("File saved to %s\n", args->output_file);
-
-    DestroyImage(&image);
-    mpz_clear(number);
-    free(str);
-}
 
 // ./galleryofbabel -i <file> -o <file> [-v (verbose, default: 0, {0,1})] [-s (size, default: 256)] [-b (base, default: 92, {2, 10, 92})]
 void ParseArgs(int argc, char **argv)
